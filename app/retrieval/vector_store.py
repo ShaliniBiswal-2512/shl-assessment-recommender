@@ -12,16 +12,23 @@ class VectorStore:
         self.persist_directory = persist_directory
         self.client = chromadb.PersistentClient(path=self.persist_directory)
         
-        # We use a compact, fast model for embeddings
-        self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        # Lazy load the model to prevent blocking Uvicorn startup
+        self.embedding_model = None
+        self.data_path = data_path
         
         self.collection = self.client.get_or_create_collection(
             name="shl_assessments",
             metadata={"hnsw:space": "cosine"}
         )
-        
-        if data_path and os.path.exists(data_path):
-            self._load_data(data_path)
+
+    def _ensure_initialized(self):
+        """Lazy loader called before any search or data operation."""
+        if self.embedding_model is None:
+            logger.info("Lazy loading SentenceTransformer model...")
+            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            
+        if self.collection.count() == 0 and self.data_path and os.path.exists(self.data_path):
+            self._load_data(self.data_path)
 
     def _load_data(self, data_path: str):
         # Only populate if empty
@@ -70,6 +77,8 @@ class VectorStore:
         Search for assessments matching the query.
         Returns a list of dictionaries.
         """
+        self._ensure_initialized()
+        
         if self.collection.count() == 0:
             return []
 
