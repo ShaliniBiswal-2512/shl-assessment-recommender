@@ -11,8 +11,6 @@ class VectorStore:
         self.persist_directory = persist_directory
         self.client = chromadb.PersistentClient(path=self.persist_directory)
         
-        # Lazy load the model to prevent blocking Uvicorn startup
-        self.embedding_model = None
         self.data_path = data_path
         
         self.collection = self.client.get_or_create_collection(
@@ -22,11 +20,6 @@ class VectorStore:
 
     def _ensure_initialized(self):
         """Lazy loader called before any search or data operation."""
-        if self.embedding_model is None:
-            logger.info("Lazy loading SentenceTransformer model...")
-            from sentence_transformers import SentenceTransformer
-            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-            
         if self.collection.count() == 0 and self.data_path and os.path.exists(self.data_path):
             self._load_data(self.data_path)
 
@@ -62,11 +55,8 @@ class VectorStore:
             })
             ids.append(str(i))
 
-        embeddings = self.embedding_model.encode(documents).tolist()
-
         self.collection.add(
             ids=ids,
-            embeddings=embeddings,
             documents=documents,
             metadatas=metadatas
         )
@@ -82,10 +72,8 @@ class VectorStore:
         if self.collection.count() == 0:
             return []
 
-        query_embedding = self.embedding_model.encode([query]).tolist()
-        
         results = self.collection.query(
-            query_embeddings=query_embedding,
+            query_texts=[query],
             n_results=top_k,
             include=["metadatas", "documents", "distances"]
         )
