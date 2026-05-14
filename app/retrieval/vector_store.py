@@ -2,7 +2,6 @@ import json
 import os
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,6 +24,7 @@ class VectorStore:
         """Lazy loader called before any search or data operation."""
         if self.embedding_model is None:
             logger.info("Lazy loading SentenceTransformer model...")
+            from sentence_transformers import SentenceTransformer
             self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
             
         if self.collection.count() == 0 and self.data_path and os.path.exists(self.data_path):
