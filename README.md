@@ -1,106 +1,70 @@
-# SHLense: Conversational SHL Assessment Recommender
+# SHLense — Conversational SHL Assessment Recommender
 
-SHLense is a conversational AI agent designed to recommend SHL Individual Test Solutions through dialogue. It features a FastAPI backend, a Streamlit frontend, and utilizes the Groq API for ultra-fast, strictly structured conversational routing and recommendation generation.
+SHLense is a conversational AI system designed to recommend relevant SHL assessments through natural language interaction. The project combines Retrieval-Augmented Generation (RAG), semantic search, and structured conversational routing to deliver grounded and context-aware recommendations.
 
 ## Features
-- **Strict Schema Compliance**: Enforces exact JSON schema for `POST /chat` using Pydantic and Groq's JSON mode.
-- **Grounded Recommendations**: Uses ChromaDB and SentenceTransformers to retrieve real SHL catalog data, preventing hallucinations.
-- **Robust Scraping**: Includes a BeautifulSoup scraper with a robust fallback seed mechanism.
-- **Conversational Intelligence**: Dynamically clarifies vague queries, refines recommendations based on user feedback, and refuses out-of-scope requests.
-- **LLM Failover**: Automatically falls back to secondary models if the primary Groq model fails or times out.
+- Conversational recommendation flow
+- Retrieval-Augmented Generation using ChromaDB
+- Strict JSON schema validation with Pydantic
+- Multi-turn refinement handling
+- Low-latency Groq-powered inference
+- Lightweight deployment-friendly architecture
+- Automatic LLM fallback handling
+
+---
+
+## Tech Stack
+
+- **Backend:** FastAPI, Uvicorn  
+- **Frontend:** Streamlit  
+- **LLM Provider:** Groq API  
+- **Vector Store:** ChromaDB  
+- **Embeddings:** ONNX MiniLM  
+- **Validation:** Pydantic  
+- **Testing:** Pytest  
+
+---
 
 ## Project Structure
-```text
+
+```bash
 project/
 ├── app/
-│   ├── main.py                 # FastAPI application & endpoints
-│   ├── models/schemas.py       # Pydantic data models
-│   ├── prompts/system_prompt.py# System instructions
-│   ├── retrieval/vector_store.py# ChromaDB wrapper
-│   └── services/groq_client.py # LLM API wrapper
 ├── data/
-│   └── shl_catalog.json        # Seed catalog data
 ├── frontend/
-│   └── app.py                  # Streamlit UI
 ├── scripts/
-│   └── scrape_catalog.py       # BeautifulSoup scraper
 ├── tests/
-│   └── test_api.py             # Pytest suite
 ├── requirements.txt
-├── render.yaml                 # Deployment config
-├── railway.json                # Deployment config
 └── README.md
-```
-
-## Setup Instructions
-
-### 1. Environment Preparation
-Ensure you have Python 3.10+ installed.
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+Setup
+Install Dependencies
 pip install -r requirements.txt
-```
-
-### 2. Environment Variables
-Set your Groq API key:
-```bash
-export GROQ_API_KEY="your_api_key_here"
-```
-
-### 3. Data Pipeline
-Initialize the vector store by running the scraper (or relying on the provided seed):
-```bash
+Set Environment Variable
+GROQ_API_KEY=your_api_key_here
+Run Scraper
 python scripts/scrape_catalog.py
-```
-
-### 4. Running the Application
-
-**Start the FastAPI Backend**:
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-Check health: `curl http://localhost:8000/health`
-
-**Start the Streamlit Frontend**:
-Open a new terminal window:
-```bash
+Start Backend
+uvicorn app.main:app --reload
+Start Frontend
 streamlit run frontend/app.py
-```
-
-## API Usage
-
-**Endpoint**: `POST /chat`
-
-**Request Payload**:
-```json
+API Endpoint
+POST /chat
+Sample Request
 {
   "messages": [
     {
       "role": "user",
-      "content": "I need a coding test."
+      "content": "I need a coding assessment."
     }
   ]
 }
-```
-
-**Response Payload (Clarification)**:
-```json
-{
-  "reply": "Are you looking for a specific language like Java or Python?",
-  "recommendations": [],
-  "end_of_conversation": false
-}
-```
-
-## Running Tests
-Execute the automated test suite using pytest:
-```bash
+Testing
 pytest tests/
-```
+Deployment
 
-## Deployment
-This repository is configured for easy deployment to platforms like Render or Railway. 
-- **Render**: Connect the repository and select the `render.yaml` Blueprint.
-- **Railway**: Connect the repository and it will use `railway.json`.
-Set the `GROQ_API_KEY` environment variable in your deployment platform dashboard.
+Configured for deployment on:
+
+Render
+Railway
+
+Set the GROQ_API_KEY in the deployment environment variables before deployment.
